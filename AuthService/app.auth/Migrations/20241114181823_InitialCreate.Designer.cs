@@ -11,7 +11,7 @@ using app.auth.DataAccess;
 namespace app.auth.Migrations
 {
     [DbContext(typeof(DbClientContext))]
-    [Migration("20241114014732_InitialCreate")]
+    [Migration("20241114181823_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -35,7 +35,6 @@ namespace app.auth.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RefreshToken")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RefreshTokenExpiryTime")

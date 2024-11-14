@@ -18,7 +18,7 @@ namespace app.auth.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
-                    RefreshToken = table.Column<string>(type: "TEXT", nullable: false),
+                    RefreshToken = table.Column<string>(type: "TEXT", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
