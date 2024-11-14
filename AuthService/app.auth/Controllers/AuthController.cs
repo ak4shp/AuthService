@@ -1,65 +1,83 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using app.auth.DataAccess;
+using app.auth.DataModels;
+using app.auth.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace app.auth.Controllers
 {
-
-    [ApiController]
     [Route("api/auth")]
-    public class AuthController : Controller
+    [ApiController]
+    public class AuthController : ControllerBase
     {
+        private readonly DbClientContext context;
+        private readonly UserService userService;
+        private readonly IConfiguration configuration;
 
-        private readonly ILogger<AuthController> logger;
-
-        public AuthController(ILogger<AuthController> logger)
+        public AuthController(DbClientContext context, IConfiguration configuration)
         {
-            this.logger = logger;
+            this.context = context;
+            this.userService = new UserService(context, configuration);
+            this.configuration = configuration;
         }
 
         [HttpPost]
-        [Route("sign-up")]
-        public IActionResult SignUp()
+        [Route("signup")]
+        public async Task<IActionResult> SignUp(UserSignUp dto)
         {
-            return View();
+            var user = await userService.RegisterUserAsync(dto.Email, dto.Password);
+            return Ok(new { user.Id, user.Email });
         }
-
 
         [HttpPost]
-        [Route("sign-in")]
-        public IActionResult SignIn()
+        [Route("signin")]
+        public async Task<IActionResult> SignIn(UserSignIn dto)
         {
-            return View();
+            var user = await userService.AuthenticateUserAsync(dto.Email, dto.Password);
+            if (user == null)
+                return Unauthorized(new { Message = "Invalid credentials" });
+
+            var token = userService.GenerateJwtToken(user);
+            var refreshToken = await userService.GenerateRefreshTokenAsync(user);
+            return Ok(new AuthResponse { Token = token, RefreshToken = refreshToken, Expiration = DateTime.UtcNow.AddMinutes(30) });
         }
 
+        [HttpPost]
+        [Route("refresh-token")]
+        public async Task<IActionResult> RefreshToken(string refreshToken)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.UtcNow);
+            if (user == null) return Unauthorized(new { Message = "Invalid or expired refresh token" });
+
+            var newToken = userService.GenerateJwtToken(user);
+            var newRefreshToken = await userService.GenerateRefreshTokenAsync(user);
+            return Ok(new AuthResponse { Token = newToken, RefreshToken = newRefreshToken, Expiration = DateTime.UtcNow.AddMinutes(30) });
+        }
 
         [HttpPost]
         [Route("revoke-token")]
-        public IActionResult RevokeTokan()
+        public async Task<IActionResult> RevokeToken(string refreshToken)
         {
-            return View();
+            var user = await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            if (user == null) return NotFound(new { Message = "User not found" });
+
+            await userService.RevokeRefreshTokenAsync(user);
+            return Ok(new { Message = "Refresh token revoked" });
         }
 
 
         [HttpPost]
-        [Route("renew-token")]
-        public IActionResult RenewToken()
+        [Route("get-user")]
+        public async Task<IActionResult> GetUserId(LoggedInUser user)
         {
-            return View();
-        }
+            var loggedInUser = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);// && u.RefreshToken == user.RefreshToken);
 
+            if (loggedInUser == null) return NotFound(new { Message = "User not found" });
+           
+            else if(loggedInUser.RefreshToken == null || loggedInUser.RefreshToken != user.RefreshToken) return NotFound(new { Message = "Invalid or expired refresh token" });
 
-        [HttpGet]
-        [Route("get-item")]
-        public IActionResult GetItem()
-        {
-            return View();
-        }
-
-
-        [HttpPost]
-        [Route("save-item")]
-        public IActionResult SaveItem()
-        {
-            return View();
+            return Ok(new AuthenticatedUserData { Id = loggedInUser.Id, Email = loggedInUser.Email });
         }
     }
+
 }
