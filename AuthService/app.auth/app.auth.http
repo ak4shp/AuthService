@@ -1,6 +1,0 @@
-@app.auth_HostAddress = http://localhost:5191
-
-GET {{app.auth_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

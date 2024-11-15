@@ -27,16 +27,14 @@ namespace app.auth
 
             app.MapHealthChecks("api/health");
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseHttpsRedirection();
-            }
+
+            //if (!app.Environment.IsDevelopment())
+            //{
+            //    app.UseHttpsRedirection();
+            //}
 
             app.UseAuthorization();
 

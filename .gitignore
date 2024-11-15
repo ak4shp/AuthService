@@ -2,3 +2,5 @@
 
 **/bin/**
 **/obj/**
+obj/
+AuthService/app.auth/obj/**
