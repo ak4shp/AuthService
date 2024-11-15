@@ -2,7 +2,7 @@
   {
     "ContainingType": "app.auth.Controllers.AuthController",
     "Method": "GetUserId",
-    "RelativePath": "api/auth/get-user",
+    "RelativePath": "api/auth/get-user-details",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -17,8 +17,8 @@
   },
   {
     "ContainingType": "app.auth.Controllers.AuthController",
-    "Method": "RefreshToken",
-    "RelativePath": "api/auth/refresh-token",
+    "Method": "RefreshAccessToken",
+    "RelativePath": "api/auth/refresh-access-token",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,

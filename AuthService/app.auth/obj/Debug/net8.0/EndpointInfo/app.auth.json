@@ -67,49 +67,7 @@
         }
       }
     },
-    "/api/auth/refresh-token": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "parameters": [
-          {
-            "name": "refreshToken",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/auth/revoke-token": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "parameters": [
-          {
-            "name": "refreshToken",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/auth/get-user": {
+    "/api/auth/get-user-details": {
       "post": {
         "tags": [
           "Auth"
@@ -139,6 +97,48 @@
           }
         }
       }
+    },
+    "/api/auth/revoke-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh-access-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -150,7 +150,7 @@
             "type": "string",
             "nullable": true
           },
-          "refreshToken": {
+          "accessToken": {
             "type": "string",
             "nullable": true
           }

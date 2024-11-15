@@ -8,15 +8,26 @@ EXPOSE 8080
 EXPOSE 8081
 
 
+
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN dotnet tool install --global dotnet-ef --version 8.*
+
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["app.auth/app.auth.csproj", "app.auth/"]
-RUN dotnet restore "./app.auth/app.auth.csproj"
+COPY ["./app.auth.csproj", "./"]
+RUN dotnet restore "./app.auth.csproj"
+
 COPY . .
-WORKDIR "/src/app.auth"
-RUN dotnet build "./app.auth.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/"
+RUN dotnet build "app.auth.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+RUN dotnet-ef database drop --force
+RUN dotnet-ef migrations remove
+RUN dotnet-ef migrations ADD InitialCreate
+RUN dotnet-ef database update
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish

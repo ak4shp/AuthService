@@ -1,6 +1,7 @@
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\appsettings.json
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\app.auth.exe
+C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\AuthService.db
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\app.auth.deps.json
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\app.auth.runtimeconfig.json
 C:\Users\akash\source\repos\AuthService\app.auth\bin\Debug\net8.0\app.auth.dll

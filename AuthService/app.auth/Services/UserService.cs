@@ -1,91 +1,207 @@
 ﻿using app.auth.DataModels;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using app.auth.DataAccess;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System;
-using app.auth.DataAccess;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace app.auth.Services
 {
     public class UserService
     {
+        private readonly ILogger<UserService> logger;
         private readonly DbClientContext context;
         private readonly IConfiguration configuration;
 
-        public UserService(DbClientContext context, IConfiguration configuration)
+        public UserService(ILogger<UserService> logger, DbClientContext context, IConfiguration configuration)
         {
+            this.logger = logger;
             this.context = context;
             this.configuration = configuration;
         }
 
+
         public async Task<User> RegisterUserAsync(string email, string password)
         {
-            var user = new User
+            try
             {
-                Id = Guid.NewGuid(),
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-                RefreshToken = GenerateRefreshToken(),
-                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7)
-            };
+                logger.LogInformation($"Registration started for User - {email}.");
 
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-            return user;
-        }
+                double.TryParse(configuration["JwtSettings:RefreshTokenExpirationDays"], out double expiry);
+                if (expiry <= 0) expiry = 7;  // Default value if not configured 
 
-        public async Task<User> AuthenticateUserAsync(string email, string password)
-        {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                return null;
-
-            return user;
-        }
-
-        public string GenerateJwtToken(User user)
-        {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                    AccessToken = string.Empty,
+                    AccessTokenExpiryTime = default,
+                    RefreshToken = GenerateRefreshToken(),
+                    RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(expiry)
+                };
+                context.Users.Add(user);
+                await context.SaveChangesAsync();
+                logger.LogInformation($"Registration Successful for User - {email}.");
+                return user;
+            }
+            catch (Exception ex)
             {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim("id", user.Id.ToString())
-        };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["AccessTokenExpirationMinutes"])),
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                logger.LogError($"Unable to Register User - {email}. Exception - {ex.Message}");
+                throw;
+            }
         }
 
-        public async Task<string> GenerateRefreshTokenAsync(User user)
+
+        public async Task<User?> SignInUserAsync(string email, string password)
         {
-            user.RefreshToken = GenerateRefreshToken();
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(int.Parse(configuration["JwtSettings:RefreshTokenExpirationDays"]));
-            context.Users.Update(user);
-            await context.SaveChangesAsync();
-            return user.RefreshToken;
+            try
+            {
+                logger.LogInformation($"SignIn Begin for User - {email}.");
+
+                var user = await AuthenticateUserAsync(email, password);
+                if (user == null)
+                    return null;
+
+                double.TryParse(configuration["JwtSettings:AccessTokenExpirationMinutes"], out double expiry);
+                if (expiry <= 0) expiry = 30;  // Default value if not configured  
+
+                user.AccessToken = GenerateJwtToken(user);
+                user.AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(expiry);
+
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation($"SignIn Successful for User - {email}.");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Unable to Register User - {email}. Exception - {ex.Message}");
+                throw;
+            }
         }
+
+
+        public async Task<User?> AuthenticateUserAsync(string email, string password)
+        {
+            try
+            {
+                logger.LogInformation($"Authentication started for User - {email}.");
+
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                    return null;
+
+                logger.LogInformation($"Authentication Successful for User - {email}.");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Unable to Authenticate User - {email}. Exception - {ex.Message}");
+                throw;
+            }
+        }
+
+
+        public async Task<User> GenerateNewAccessTokenAsync(User user)
+        {
+            try
+            {
+                logger.LogInformation($"Generating new access token for User - {user.Email}.");
+
+                double.TryParse(configuration["JwtSettings:AccessTokenExpirationMinutes"], out double expiry);
+                if (expiry <= 0) expiry = 30;  // Default value if not configured 
+
+                user.AccessToken = GenerateJwtToken(user);
+                user.AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(expiry);
+
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation($"New access token generated for User - {user.Email}.");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Unable to generate new access token for User - {user.Email}. Exception - {ex.Message}");
+                throw;
+            }
+        }
+
 
         public async Task RevokeRefreshTokenAsync(User user)
         {
-            user.RefreshToken = null;
-            context.Users.Update(user);
-            await  context.SaveChangesAsync();
+            try
+            {
+                logger.LogInformation($"Revoking refresh token for User - {user.Email}.");
+
+                user.RefreshToken = null;
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation($"Refresh token revoked for User - {user.Email}.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Unable to revoke refresh token for User - {user.Email}. Exception - {ex.Message}");
+                throw;
+            }
         }
 
-        private string GenerateRefreshToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-    }
 
+        public async Task<User?> GetExistingUserByEmail(string email) =>
+            await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        public async Task<User?> GetExistingUserByRefreshToken(string refreshToken) =>
+            await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+
+        public async Task<User?> GetExistingUserByValidatedRefreshToken(string refreshToken) =>
+            await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.UtcNow);
+
+
+        #region Utility
+        private string GenerateRefreshToken() =>
+           Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+        private string GenerateJwtToken(User user)
+        {
+            try
+            {
+                logger.LogInformation($"Generating access token for User - {user.Email}.");
+
+                var jwtSettings = configuration.GetSection("JwtSettings");
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim("id", user.Id.ToString())
+                };
+
+                double.TryParse(jwtSettings["AccessTokenExpirationMinutes"], out double expiry);
+                if (expiry <= 0) expiry = 30;  // Default value if not configured 
+
+                var token = new JwtSecurityToken(
+                    issuer: jwtSettings["Issuer"],
+                    audience: jwtSettings["Audience"],
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(expiry),
+                    signingCredentials: credentials);
+
+                logger.LogInformation($"Access token generated for User - {user.Email}.");
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Unable to generate access token for User - {user.Email}. Exception - {ex.Message}");
+                throw;
+            }
+        }
+        #endregion
+    }
 }

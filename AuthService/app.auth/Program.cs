@@ -1,5 +1,6 @@
 
 using app.auth.DataAccess;
+using app.auth.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -11,6 +12,8 @@ namespace app.auth
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddTransient<UserService>();
+
             builder.Services.AddDbContext<DbClientContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("LocalhostDbConnection")));
 
@@ -19,7 +22,10 @@ namespace app.auth
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddHealthChecks();
             var app = builder.Build();
+
+            app.MapHealthChecks("api/health");
 
             if (app.Environment.IsDevelopment())
             {
@@ -27,10 +33,12 @@ namespace app.auth
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

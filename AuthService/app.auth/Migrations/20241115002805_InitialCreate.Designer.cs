@@ -11,7 +11,7 @@ using app.auth.DataAccess;
 namespace app.auth.Migrations
 {
     [DbContext(typeof(DbClientContext))]
-    [Migration("20241114181823_InitialCreate")]
+    [Migration("20241115002805_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,12 @@ namespace app.auth.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AccessTokenExpiryTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")

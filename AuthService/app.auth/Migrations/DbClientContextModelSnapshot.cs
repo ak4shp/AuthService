@@ -23,6 +23,12 @@ namespace app.auth.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AccessTokenExpiryTime")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
