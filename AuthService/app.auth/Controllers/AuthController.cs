@@ -20,28 +20,31 @@ namespace app.auth.Controllers
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> SignUp(UserSignUp dto)
+        public async Task<IActionResult> SignUp(SignUpInput input)
         {
             try
             {
-                var user = await userService.RegisterUserAsync(dto.Email, dto.Password);
+                var user = await userService.RegisterUserAsync(input.Email, input.Password);
                 return Ok(new { user.Id, user.Email });
             }
             catch (Exception ex)
             {
-                var errorResponse = new { Message = "An error occurred on the server.", Details = ex.Message };
-                return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
+                var error = (Message: "An error occurred on the server.", Details: ex.Message);
+                var response = new ObjectResult(error);
+                response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                return response;
             }
         }
 
 
         [HttpPost]
         [Route("signin")]
-        public async Task<IActionResult> SignIn(UserSignIn dto)
+        public async Task<IActionResult> SignIn(SignInInput input)
         {
             try
             {
-                var user = await userService.SignInUserAsync(dto.Email, dto.Password);
+                var user = await userService.SignInUserAsync(input.Email, input.Password);
                 if (user == null)
                     return Unauthorized(new { Message = "Invalid credentials" });
 
@@ -55,8 +58,11 @@ namespace app.auth.Controllers
             }
             catch (Exception ex)
             {
-                var errorResponse = new { Message = "An error occurred on the server.", Details = ex.Message };
-                return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
+                var error = (Message: "An error occurred on the server.", Details: ex.Message);
+                var response = new ObjectResult(error);
+                response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                return response;
             }
         }
 
@@ -68,26 +74,26 @@ namespace app.auth.Controllers
             try
             {
                 User? loggedInUser = await userService.GetExistingUserByEmail(user.Email);
-
-                if (loggedInUser == null)
+                if (loggedInUser==null)
                     return NotFound(new { Message = "User not found!" });
 
-                else if (loggedInUser.RefreshToken == null)
+                if (!loggedInUser.HasValidRefreshToken())
                     return Unauthorized(new { Message = "Refresh token not found!" });
 
-                else if (loggedInUser.AccessToken != user.AccessToken || loggedInUser.AccessTokenExpiryTime < DateTime.UtcNow)
+                if (!loggedInUser.HasValidAccessToken(user.AccessToken) || loggedInUser.TokenExpired())
                     return Unauthorized(new { Message = "Invalid or expired access token!" });
 
                 return Ok(new AuthorisedUserData { Id = loggedInUser.Id, Email = loggedInUser.Email });
             }
             catch (Exception ex)
             {
-                var errorResponse = new { Message = "An error occurred on the server.", Details = ex.Message };
-                return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
+                var error = (Message: "An error occurred on the server.", Details: ex.Message);
+                var response = new ObjectResult(error);
+                response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                return response;
             }
         }
-
-   
 
         [HttpPost]
         [Route("revoke-token")]
@@ -96,16 +102,20 @@ namespace app.auth.Controllers
             try
             {
                 User? user = await userService.GetExistingUserByRefreshToken(refreshToken);
-
-                if (user == null) return NotFound(new { Message = "User not found" });
+                if (user == null)
+                    return NotFound(new { Message = "User not found" });
 
                 await userService.RevokeRefreshTokenAsync(user);
+
                 return Ok(new { Message = "Refresh token revoked" });
             }
             catch (Exception ex)
             {
-                var errorResponse = new { Message = "An error occurred on the server.", Details = ex.Message };
-                return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
+                var error = (Message: "An error occurred on the server.", Details: ex.Message);
+                var response = new ObjectResult(error);
+                response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                return response;
             }
         }
 
@@ -118,8 +128,8 @@ namespace app.auth.Controllers
             try
             {
                 User? user = await userService.GetExistingUserByValidatedRefreshToken(refreshToken);
-
-                if (user == null) return Unauthorized(new { Message = "Invalid or expired refresh token" });
+                if (user == null)
+                    return Unauthorized(new { Message = "Invalid or expired refresh token" });
 
                 var newUser = await userService.GenerateNewAccessTokenAsync(user);
 
@@ -133,8 +143,11 @@ namespace app.auth.Controllers
             }
             catch (Exception ex)
             {
-                var errorResponse = new { Message = "An error occurred on the server.", Details = ex.Message };
-                return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
+                var error = (Message: "An error occurred on the server.", Details: ex.Message);
+                var response = new ObjectResult(error);
+                response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                return response;
             }
         }
     }

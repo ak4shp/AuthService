@@ -9,6 +9,23 @@
         public DateTime AccessTokenExpiryTime { get; set; }
         public string? RefreshToken { get; set; } = string.Empty;
         public DateTime RefreshTokenExpiryTime { get; set; }
+
+        public bool HasValidAccessToken(string? accessToken)
+        {
+            return AccessToken == accessToken;
+        }
+
+        public bool HasValidRefreshToken()
+        {
+            return RefreshToken != null;
+        }
+
+        public bool TokenExpired()
+        {
+            return AccessTokenExpiryTime < DateTime.UtcNow
+        }
+
+
     }
 
 

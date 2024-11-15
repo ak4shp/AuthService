@@ -64,7 +64,8 @@ namespace app.auth.Services
 
                 double.TryParse(configuration["JwtSettings:AccessTokenExpirationMinutes"], out double accessTokenExpiry);
                 double.TryParse(configuration["JwtSettings:RefreshTokenExpirationMinutes"], out double refreshTokenExpiry);
-                if (accessTokenExpiry <= 0) accessTokenExpiry = 30;  // Default value if not configured  
+
+                if (accessTokenExpiry <= 0) accessTokenExpiry = 30;  // Default value if not configured
                 if (refreshTokenExpiry <= 0) refreshTokenExpiry = 7;  // Default value if not configured  
 
                 user.AccessToken = GenerateJwtToken(user);
@@ -141,6 +142,7 @@ namespace app.auth.Services
                 logger.LogInformation($"Revoking refresh token for User - {user.Email}.");
 
                 user.RefreshToken = null;
+
                 context.Users.Update(user);
                 await context.SaveChangesAsync();
 
@@ -193,7 +195,8 @@ namespace app.auth.Services
                     audience: jwtSettings["Audience"],
                     claims: claims,
                     expires: DateTime.UtcNow.AddMinutes(expiry),
-                    signingCredentials: credentials);
+                    signingCredentials: credentials
+                );
 
                 logger.LogInformation($"Access token generated for User - {user.Email}.");
                 return new JwtSecurityTokenHandler().WriteToken(token);
