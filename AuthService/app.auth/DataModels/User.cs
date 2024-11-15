@@ -1,4 +1,6 @@
-﻿namespace app.auth.DataModels
+﻿using System;
+
+namespace app.auth.DataModels
 {
     public class User
     {
@@ -22,7 +24,7 @@
 
         public bool TokenExpired()
         {
-            return AccessTokenExpiryTime < DateTime.UtcNow
+            return AccessTokenExpiryTime < DateTime.UtcNow;
         }
 
 

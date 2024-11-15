@@ -1,10 +1,14 @@
-﻿using app.auth.DataModels;
+﻿using System;
+using app.auth.DataModels;
 using app.auth.DataAccess;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace app.auth.Services
