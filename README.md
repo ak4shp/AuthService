@@ -1,5 +1,5 @@
-# Django Restframework demo with JWT Authentication
-An application to demostrate JWT based authentication for rest apis.
+# Dotnet JWT Authentication Project
+An application to demostrate JWT based authentication for REST APIs.
 
 ---
 
