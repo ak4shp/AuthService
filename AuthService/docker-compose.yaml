@@ -1,32 +1,54 @@
 version: '3.8'
 
 services:
-  app.auth:
-    image: app.auth
-    user: root
+  authservice:
     build:
       context: .
-      dockerfile: app.auth/Dockerfile
-      args:
-        BUILD_CONFIGURATION: Release  # Can be adjusted if needed
+      dockerfile: ./app.auth/Dockerfile
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "8080:8080"  # Map port 8080 in the container to port 8080 on the host
+    volumes:
+      - ./app.auth/AuthService.db:/app/AuthService.db  # Mount the SQLite DB for persistence
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__LocalhostDbConnection=Data Source=/app/data/AuthService.db  # Set SQLite connection string
-    container_name: app-auth-service
-    restart: always
-    volumes:
-      - app-auth-data:/app/data  # Ensure SQLite DB persists between container restarts
-    entrypoint: ["sh", "-c", "dotnet-ef database update && dotnet app.auth.dll"]  # Run migrations on startup
 
-networks:
-  default:
-    driver: bridge
 
-      # Add this line to docker-compose.yml to run as root
 
-volumes:
-  app-auth-data:
-    driver: local  # Persist SQLite data across container restarts
+
+
+
+
+
+
+# version: '3.8'
+
+# services:
+#   app.auth:
+#     image: app.auth
+#     user: root
+#     build:
+#       context: .
+#       dockerfile: app.auth/Dockerfile
+#       args:
+#         BUILD_CONFIGURATION: Release  # Can be adjusted if needed
+#     ports:
+#       - "8080:8080"
+#       - "8081:8081"
+#     environment:
+#       - ASPNETCORE_ENVIRONMENT=Development
+#       - ConnectionStrings__LocalhostDbConnection=Data Source=/app/data/AuthService.db  # Set SQLite connection string
+#     container_name: app-auth-service
+#     restart: always
+#     volumes:
+#       - app-auth-data:/app/data  # Ensure SQLite DB persists between container restarts
+#     entrypoint: ["sh", "-c", "dotnet-ef database update && dotnet app.auth.dll"]  # Run migrations on startup
+
+# networks:
+#   default:
+#     driver: bridge
+
+#       # Add this line to docker-compose.yml to run as root
+
+# volumes:
+#   app-auth-data:
+#     driver: local  # Persist SQLite data across container restarts

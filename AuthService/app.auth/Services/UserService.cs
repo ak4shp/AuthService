@@ -37,11 +37,8 @@ namespace app.auth.Services
                     Id = Guid.NewGuid(),
                     Email = email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-                    AccessToken = string.Empty,
-                    AccessTokenExpiryTime = default,
-                    RefreshToken = GenerateRefreshToken(),
-                    RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(expiry)
                 };
+
                 context.Users.Add(user);
                 await context.SaveChangesAsync();
                 logger.LogInformation($"Registration Successful for User - {email}.");
@@ -65,11 +62,16 @@ namespace app.auth.Services
                 if (user == null)
                     return null;
 
-                double.TryParse(configuration["JwtSettings:AccessTokenExpirationMinutes"], out double expiry);
-                if (expiry <= 0) expiry = 30;  // Default value if not configured  
+                double.TryParse(configuration["JwtSettings:AccessTokenExpirationMinutes"], out double accessTokenExpiry);
+                double.TryParse(configuration["JwtSettings:RefreshTokenExpirationMinutes"], out double refreshTokenExpiry);
+                if (accessTokenExpiry <= 0) accessTokenExpiry = 30;  // Default value if not configured  
+                if (refreshTokenExpiry <= 0) refreshTokenExpiry = 7;  // Default value if not configured  
 
                 user.AccessToken = GenerateJwtToken(user);
-                user.AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(expiry);
+                user.AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(accessTokenExpiry);
+
+                user.RefreshToken = GenerateRefreshToken();
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(refreshTokenExpiry);
 
                 context.Users.Update(user);
                 await context.SaveChangesAsync();

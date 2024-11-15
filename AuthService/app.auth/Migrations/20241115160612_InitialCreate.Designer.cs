@@ -11,7 +11,7 @@ using app.auth.DataAccess;
 namespace app.auth.Migrations
 {
     [DbContext(typeof(DbClientContext))]
-    [Migration("20241115002805_InitialCreate")]
+    [Migration("20241115160612_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

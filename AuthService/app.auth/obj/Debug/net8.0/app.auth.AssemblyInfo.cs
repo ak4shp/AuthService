@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("app.auth")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8898348bb192ee0bcd7fd52be7a6a3d66cd2cbe4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a5c62fc5ac4e675c143e13dbca0471603d880236")]
 [assembly: System.Reflection.AssemblyProductAttribute("app.auth")]
 [assembly: System.Reflection.AssemblyTitleAttribute("app.auth")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

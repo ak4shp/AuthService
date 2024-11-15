@@ -137,7 +137,5 @@ namespace app.auth.Controllers
                 return new ObjectResult(errorResponse) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
-
-
     }
 }
